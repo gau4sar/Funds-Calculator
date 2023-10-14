@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:funds_calculator/utils/Utils.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
+import '../data/response/status.dart';
 import '../database/models/Fund.dart';
 import 'FundDetailsPage.dart';
 import 'ViewModel/FundViewModel.dart';
@@ -15,7 +18,6 @@ class FundsListPage extends StatefulWidget {
 }
 
 class _FundsListPageState extends State<FundsListPage> {
-  final stockViewModel = Get.put(StocksViewModel());
 
   late FundViewModel _viewModel;
   List<Fund> funds = [];
@@ -37,7 +39,6 @@ class _FundsListPageState extends State<FundsListPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
 
-      stockViewModel.getTickerSearchResponse("Tes");
       _viewModel = Provider.of<FundViewModel>(context, listen: false);
 
       loadFunds();
@@ -107,10 +108,10 @@ class _FundsListPageState extends State<FundsListPage> {
       ),
     );
   }
-
   void _showAddFundDialog(BuildContext context) {
-    String fundName = '';
     String fundPrice = '';
+    TextEditingController fundNameController = TextEditingController();
+    final stockViewModel = Get.put(StocksViewModel());
 
     showDialog(
       context: context,
@@ -120,9 +121,28 @@ class _FundsListPageState extends State<FundsListPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Fund Name'),
-                onChanged: (value) => fundName = value,
+
+              TypeAheadField<String>(
+                textFieldConfiguration: TextFieldConfiguration(
+                  controller: fundNameController,
+                  decoration: InputDecoration(labelText: 'Fund Name'),
+                ),
+                hideOnLoading: true,
+                loadingBuilder: (context) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+                // Use a conditional widget to display the loading indicator when needed
+                suggestionsCallback: (String pattern) => stockViewModel.getTickerSearchResponse(pattern),
+                itemBuilder: (context, String suggestion) {
+                  return ListTile(
+                    title: Text(suggestion),
+                  );
+                },
+                onSuggestionSelected: (String suggestion) {
+                  fundNameController.text = suggestion;
+                },
               ),
               TextField(
                 decoration: InputDecoration(labelText: 'Fund Price'),
@@ -139,19 +159,17 @@ class _FundsListPageState extends State<FundsListPage> {
             ),
             TextButton(
               onPressed: () {
-                if (fundName.isNotEmpty && fundPrice.isNotEmpty) {
-                  final newFund =
-                      Fund(name: fundName.trim(), price: fundPrice, stocks: []);
+                if (fundNameController.text .isNotEmpty && fundPrice.isNotEmpty) {
+                  final newFund = Fund(name: fundNameController.text .trim(), price: fundPrice, stocks: []);
 
-                  _viewModel.addFund(fund:newFund, callback: ({required bool isError, String? errorMessage}) {
+                  _viewModel.addFund(fund: newFund, callback: ({required bool isError, String? errorMessage}) {
                     if (isError) {
                       // Handle the error case here
                       if (errorMessage != null) {
                         print(errorMessage);
 
                         Fluttertoast.showToast(
-                          msg:
-                          errorMessage,
+                          msg: errorMessage,
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.BOTTOM,
                         );
@@ -166,6 +184,9 @@ class _FundsListPageState extends State<FundsListPage> {
                     }
                   });
                 }
+                else{
+                  Utils.toastMessage("Please fill all the details");
+                }
               },
               child: Text('Add'),
             ),
@@ -174,6 +195,7 @@ class _FundsListPageState extends State<FundsListPage> {
       },
     );
   }
+
   Future<void> _showUpdateFundDialog(BuildContext context, Fund fund) async {
     String updatedName = fund.name;
     String updatedPrice = fund.price;

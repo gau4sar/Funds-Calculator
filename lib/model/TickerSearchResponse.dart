@@ -1,15 +1,13 @@
-import 'package:get/get.dart';
-
 class BestMatch {
-  var symbol = ''.obs;
-  var name = ''.obs;
-  var type = ''.obs;
-  var region = ''.obs;
-  var marketOpen = ''.obs;
-  var marketClose = ''.obs;
-  var timezone = ''.obs;
-  var currency = ''.obs;
-  var matchScore = ''.obs;
+  String symbol;
+  String name;
+  String type;
+  String region;
+  String marketOpen;
+  String marketClose;
+  String timezone;
+  String currency;
+  double matchScore;  // Change the type to double
 
   BestMatch({
     required this.symbol,
@@ -33,19 +31,20 @@ class BestMatch {
       marketClose: json['6. marketClose'],
       timezone: json['7. timezone'],
       currency: json['8. currency'],
-      matchScore: json['9. matchScore'],
+      matchScore: double.parse(json['9. matchScore']),  // Convert the value to double
     );
   }
 }
 
 class TickerSearchResponse {
-  var tickerSearchResponse = <BestMatch>[].obs;
+  List<BestMatch> tickerSearchResponse;
 
   TickerSearchResponse({required this.tickerSearchResponse});
 
   factory TickerSearchResponse.fromJson(Map<String, dynamic> json) {
-    List<BestMatch> tickerSearchResponseList = List<BestMatch>.from(
-        json['TickerSearchResponse'].map((item) => BestMatch.fromJson(item)));
-    return TickerSearchResponse(tickerSearchResponse: tickerSearchResponseList.obs);
+
+    List<BestMatch> bestMatches = (json['bestMatches'] as List).map((item) => BestMatch.fromJson(item)).toList();
+
+    return TickerSearchResponse(tickerSearchResponse: bestMatches);
   }
 }
