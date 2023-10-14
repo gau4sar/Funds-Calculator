@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 
 import '../database/models/Fund.dart';
 import 'FundDetailsPage.dart';
-import 'ViewModel/FundViewModel.dart'; // Import your FundDetailsPage
+import 'ViewModel/FundViewModel.dart';
+import 'ViewModel/StocksViewModel.dart'; // Import your FundDetailsPage
 
 class FundsListPage extends StatefulWidget {
   @override
@@ -12,6 +15,8 @@ class FundsListPage extends StatefulWidget {
 }
 
 class _FundsListPageState extends State<FundsListPage> {
+  final stockViewModel = Get.put(StocksViewModel());
+
   late FundViewModel _viewModel;
   List<Fund> funds = [];
   var isLoading = true;
@@ -31,6 +36,8 @@ class _FundsListPageState extends State<FundsListPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+
+      stockViewModel.getTickerSearchResponse("Tes");
       _viewModel = Provider.of<FundViewModel>(context, listen: false);
 
       loadFunds();
